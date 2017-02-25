@@ -9,9 +9,9 @@ import logging
 from homeassistant.helpers import discovery
 from homeassistant.helpers.entity import Entity
 
-REQUIREMENTS = ['https://github.com/thecynic/pylutron/archive/v0.1.0.zip#'
-                'pylutron==0.1.0']
-
+REQUIREMENTS = ['https://github.com/scottjgibson/pylutron'
+                '/archive/master.zip'
+                '#pylutron==0.2']
 DOMAIN = 'lutron'
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,12 +31,20 @@ def setup(hass, base_config):
     hass.data[LUTRON_CONTROLLER] = Lutron(
         config['lutron_host'],
         config['lutron_user'],
-        config['lutron_password']
+        config['lutron_password'],
+        config['lutron_caseta']
     )
-    hass.data[LUTRON_CONTROLLER].load_xml_db()
+
+    if(config['lutron_caseta']):
+        hass.data[LUTRON_CONTROLLER].load_json_db(config['lutron_caseta_config'])
+    else:
+        hass.data[LUTRON_CONTROLLER].load_xml_db()
+
     hass.data[LUTRON_CONTROLLER].connect()
     _LOGGER.info("Connected to Main Repeater at %s", config['lutron_host'])
 
+    group = get_component('group')
+    import pdb; pdb.set_trace()
     # Sort our devices into types
     for area in hass.data[LUTRON_CONTROLLER].areas:
         for output in area.outputs:
