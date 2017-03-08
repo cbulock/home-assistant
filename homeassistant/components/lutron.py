@@ -25,23 +25,24 @@ def setup(hass, base_config):
     from pylutron import Lutron
 
     hass.data[LUTRON_CONTROLLER] = None
-    hass.data[LUTRON_DEVICES] = {'light': []}
+    hass.data[LUTRON_DEVICES] = {'light':[], 'binary_sensor': []}
+    hass.data[LUTRON_GROUPS] = {}
 
     config = base_config.get(DOMAIN)
     hass.data[LUTRON_CONTROLLER] = Lutron(
-        config['lutron_host'],
-        config['lutron_user'],
-        config['lutron_password'],
-        config['lutron_caseta']
+        config['host'],
+        config['user'],
+        config['password'],
+        config['caseta']
     )
 
-    if(config['lutron_caseta']):
-        hass.data[LUTRON_CONTROLLER].load_json_db(config['lutron_caseta_config'])
+    if(config['caseta']):
+        hass.data[LUTRON_CONTROLLER].load_json_db(config['caseta_config'])
     else:
         hass.data[LUTRON_CONTROLLER].load_xml_db()
 
     hass.data[LUTRON_CONTROLLER].connect()
-    _LOGGER.info("Connected to Main Repeater at %s", config['lutron_host'])
+    _LOGGER.info("Connected to Main Repeater at %s", config['host'])
 
     group = get_component('group')
     import pdb; pdb.set_trace()
@@ -49,8 +50,11 @@ def setup(hass, base_config):
     for area in hass.data[LUTRON_CONTROLLER].areas:
         for output in area.outputs:
             hass.data[LUTRON_DEVICES]['light'].append((area.name, output))
+        for keypad in area.keypads:
+            for button in keypad.buttons:
+                hass.data[LUTRON_DEVICES]['binary_sensor'].append((area.name, button))
 
-    for component in ('light',):
+    for component in ('light', 'binary_sensor',):
         discovery.load_platform(hass, component, DOMAIN, None, base_config)
     return True
 
